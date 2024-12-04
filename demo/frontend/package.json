@@ -12,8 +12,10 @@
     "extends": "react-app"
   },
   "dependencies": {
+    "@deck.gl/mapbox": "^9.0.36",
     "date-fns": "^2.30.0",
     "debounce": "1.2.1",
+    "deck.gl": "^9.0.36",
     "maplibre-gl": "^3.5.2",
     "normalize.css": "8.0.1",
     "react": "18.2.0",

@@ -8,6 +8,15 @@ import dateConverter from "../../utils/dateConverter";
 
 import Container from "./Container";
 import Filters from "./Filters";
+import * as DECK from "deck.gl";
+import { MapboxOverlay } from "@deck.gl/mapbox";
+// import { MVTLayer, MVTLayerPickingInfo } from "@deck.gl/geo-layers";
+import type { Feature, Geometry } from "geojson";
+
+const COORDS_MSC = [37.612722, 55.752778];
+
+const AIR_PORTS =
+  "https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_airports.geojson";
 
 const mapStyle = { height: "1615px", marginLeft: "350px" };
 
@@ -63,6 +72,98 @@ class Map extends PureComponent<
     layers.forEach(({ maplibreLayer }) => {
       this.map.addLayer(maplibreLayer, "place_town");
     });
+
+    const limit = 100;
+    // Sample data source = https://data.iledefrance.fr
+    const parisSights = `https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/principaux-sites-touristiques-en-ile-de-france0/records?limit=${limit}`;
+
+    let layerControl;
+
+    type PropertiesType = {
+      name?: string;
+      rank: number;
+      layerName: string;
+      class: string;
+    };
+
+    // const mvtLayer = new MVTLayer<PropertiesType>({
+    //   id: "MVTLayer",
+    //   // data: [`http://${import.meta.ev.MBTILES_URL}/{z}/{x}/{y}`],
+    //   data: [
+    //     `https://geo.mgswag.duckdns.org/tiles/central-fed-district-shortbread/{z}/{x}/{y}`,
+    //   ],
+    //   minZoom: 0,
+    //   maxZoom: 14,
+    //   getFillColor: (f: Feature<Geometry, PropertiesType>) => {
+    //     switch (f.properties.layerName) {
+    //       case "poi":
+    //         return [255, 0, 0];
+    //       case "water":
+    //         return [120, 150, 180];
+    //       case "building":
+    //         return [218, 218, 218];
+    //       default:
+    //         return [240, 240, 240];
+    //     }
+    //   },
+    //   getLineWidth: (f: Feature<Geometry, PropertiesType>) => {
+    //     switch (f.properties.class) {
+    //       case "street":
+    //         return 6;
+    //       case "motorway":
+    //         return 10;
+    //       default:
+    //         return 1;
+    //     }
+    //   },
+    //   getLineColor: [192, 192, 192],
+    //   getPointRadius: 2,
+    //   pointRadiusUnits: "pixels",
+    //   stroked: false,
+    //   // picking: true,
+    // });
+
+    const deckOverlay = new MapboxOverlay({
+      // interleaved: true,
+      layers: [
+        new DECK.GeoJsonLayer({
+          id: "airports",
+          data: AIR_PORTS,
+          // Styles
+          filled: true,
+          pointRadiusMinPixels: 2,
+          pointRadiusScale: 2000,
+          getPointRadius: (f) => 11 - f.properties.scalerank,
+          getFillColor: [200, 0, 80, 180],
+          // Interactive props
+          pickable: true,
+          autoHighlight: true,
+          onClick: (info) =>
+            // eslint-disable-next-line
+            info.object &&
+            alert(
+              `${info.object.properties.name} (${info.object.properties.abbrev})`
+            ),
+          // beforeId: 'watername_ocean' // In interleaved mode, render the layer under map labels
+        }),
+        new DECK.ArcLayer({
+          id: "arcs",
+          data: AIR_PORTS,
+          dataTransform: (d) =>
+            //@ts-ignore
+            d.features.filter((f) => f.properties.scalerank < 4),
+          // Styles
+          getSourcePosition: (f) => [-0.4531566, 51.4709959], // London
+          getTargetPosition: (f) => f.geometry.coordinates,
+          getSourceColor: [0, 128, 200],
+          getTargetColor: [200, 0, 80],
+          getWidth: 1,
+        }),
+        // mvtLayer,
+      ],
+    });
+
+    this.map.addControl(deckOverlay);
   };
 
   changeFilter = (filter: string, value: any) => {
