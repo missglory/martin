@@ -14,7 +14,7 @@ import Footer from '../Footer/Footer';
 const App = () => (
   <ParallaxProvider>
     <GlobalStyle />
-    <Intro />
+    {/* <Intro />
     <Description>
       Martin is an Open Source PostGIS vector tile server
     </Description>
@@ -28,10 +28,10 @@ const App = () => (
         Martin uses a database function to filter the data by selected dates,
         days of the week, and hours and to sum or average the numbers by areas.
       </p>
-    </TryIt>
+    </TryIt> */}
     <Map />
-    <Development />
-    <Footer />
+    {/* <Development />
+    <Footer /> */}
   </ParallaxProvider>
 );
 

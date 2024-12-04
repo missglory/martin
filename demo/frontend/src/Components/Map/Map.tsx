@@ -1,77 +1,84 @@
-import React, { PureComponent } from 'react';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import React, { PureComponent } from "react";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 
-import { MAP_STYLE } from '../../config/constants';
-import layers from '../../config/layers';
-import dateConverter from '../../utils/dateConverter';
+import { MAP_STYLE } from "../../config/constants";
+import layers from "../../config/layers";
+import dateConverter from "../../utils/dateConverter";
 
-import Container from './Container';
-import Filters from './Filters';
+import Container from "./Container";
+import Filters from "./Filters";
 
-const mapStyle = { height: '615px', marginLeft: '350px' };
+const mapStyle = { height: "1615px", marginLeft: "350px" };
 
-class Map extends PureComponent<{}, {visibleLayer: any, range: any, hour: any}> {
-
+class Map extends PureComponent<
+  {},
+  { visibleLayer: any; range: any; hour: any }
+> {
   map: any;
   nav: any;
 
   constructor(props: {} | Readonly<{}>) {
     super(props);
     this.state = {
-      visibleLayer: 'trips',
+      visibleLayer: "trips",
       range: {
         from: new Date(2017, 0, 1),
-        to: new Date(2017, 4, 4)
+        to: new Date(2017, 4, 4),
       },
-      hour: 9
+      hour: 9,
     };
   }
 
   componentDidMount() {
     this.map = new maplibregl.Map({
       cooperativeGestures: true,
-      container: 'map',
+      container: "map",
       style: MAP_STYLE,
-      center: [-74.005308, 40.713370],
+      center: [-74.005308, 40.71337],
       pitch: 45,
       zoom: 9,
     });
     this.nav = new maplibregl.NavigationControl();
 
-    this.map.addControl(this.nav, 'top-right');
-    this.map.on('load', this.mapOnLoad);
+    this.map.addControl(this.nav, "top-right");
+    this.map.on("load", this.mapOnLoad);
   }
 
   componentDidUpdate() {
     const newStyle = this.map.getStyle();
-    newStyle.sources['trips_source'].url = `/tiles/get_trips?${this.getQueryParams()}`;
+    newStyle.sources[
+      "trips_source"
+    ].url = `/tiles/get_trips?${this.getQueryParams()}`;
     this.map.setStyle(newStyle);
   }
 
   mapOnLoad = () => {
     const queryParams = this.getQueryParams();
 
-    this.map.addSource('trips_source', {
-      type: 'vector',
-      url: `/tiles/get_trips?${queryParams}`
+    this.map.addSource("trips_source", {
+      type: "vector",
+      url: `/tiles/get_trips?${queryParams}`,
     });
     layers.forEach(({ maplibreLayer }) => {
-      this.map.addLayer(maplibreLayer, 'place_town');
+      this.map.addLayer(maplibreLayer, "place_town");
     });
   };
 
   changeFilter = (filter: string, value: any) => {
     if (filter !== undefined && value !== undefined) {
-      this.setState(state => ({
+      this.setState((state) => ({
         ...state,
-        [filter]: value
+        [filter]: value,
       }));
     }
   };
 
   getQueryParams = () => {
-    const { range: { from, to }, hour } = this.state;
+    const {
+      range: { from, to },
+      hour,
+    } = this.state;
 
     const dateFrom = `${dateConverter(from)}.2017`;
     let dateTo = `${dateConverter(to)}.2017`;
@@ -85,9 +92,9 @@ class Map extends PureComponent<{}, {visibleLayer: any, range: any, hour: any}> 
   toggleLayer = (layerId: string) => {
     layers.forEach(({ id }) => {
       if (layerId === id) {
-        this.map.setLayoutProperty(id, 'visibility', 'visible');
+        this.map.setLayoutProperty(id, "visibility", "visible");
       } else {
-        this.map.setLayoutProperty(id, 'visibility', 'none');
+        this.map.setLayoutProperty(id, "visibility", "none");
       }
     });
     this.setState({ visibleLayer: layerId });
@@ -105,10 +112,7 @@ class Map extends PureComponent<{}, {visibleLayer: any, range: any, hour: any}> 
           toggleLayer={this.toggleLayer}
           changeFilter={this.changeFilter}
         />
-        <div
-          id='map'
-          style={mapStyle}
-        />
+        <div id="map" style={mapStyle} />
       </Container>
     );
   }
