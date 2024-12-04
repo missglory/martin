@@ -10,15 +10,38 @@ import Container from "./Container";
 import Filters from "./Filters";
 import * as DECK from "deck.gl";
 import { MapboxOverlay } from "@deck.gl/mapbox";
-// import { MVTLayer, MVTLayerPickingInfo } from "@deck.gl/geo-layers";
+import { MVTLayer, MVTLayerPickingInfo } from "@deck.gl/geo-layers";
 import type { Feature, Geometry } from "geojson";
+import { CollisionFilterExtension } from "@deck.gl/extensions";
+import { scaleLog } from "d3-scale";
 
 const COORDS_MSC = [37.612722, 55.752778];
 
 const AIR_PORTS =
   "https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_airports.geojson";
 
+// Sample data
+const CITIES_URL =
+  "https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/text-layer/cities-1000.csv";
+
 const mapStyle = { height: "1615px", marginLeft: "350px" };
+
+type City = {
+  name: string;
+  population: number;
+  longitude: number;
+  latitude: number;
+};
+
+const colorScale = scaleLog<DECK.Color>()
+  .domain([1e3, 1e4, 1e5, 1e6, 1e7])
+  .range([
+    [29, 145, 192],
+    [65, 182, 196],
+    [127, 205, 187],
+    [199, 233, 180],
+    [237, 248, 177],
+  ]);
 
 class Map extends PureComponent<
   {},
@@ -86,41 +109,80 @@ class Map extends PureComponent<
       class: string;
     };
 
-    // const mvtLayer = new MVTLayer<PropertiesType>({
-    //   id: "MVTLayer",
-    //   // data: [`http://${import.meta.ev.MBTILES_URL}/{z}/{x}/{y}`],
-    //   data: [
-    //     `https://geo.mgswag.duckdns.org/tiles/central-fed-district-shortbread/{z}/{x}/{y}`,
-    //   ],
-    //   minZoom: 0,
-    //   maxZoom: 14,
-    //   getFillColor: (f: Feature<Geometry, PropertiesType>) => {
-    //     switch (f.properties.layerName) {
-    //       case "poi":
-    //         return [255, 0, 0];
-    //       case "water":
-    //         return [120, 150, 180];
-    //       case "building":
-    //         return [218, 218, 218];
-    //       default:
-    //         return [240, 240, 240];
-    //     }
-    //   },
-    //   getLineWidth: (f: Feature<Geometry, PropertiesType>) => {
-    //     switch (f.properties.class) {
-    //       case "street":
-    //         return 6;
-    //       case "motorway":
-    //         return 10;
-    //       default:
-    //         return 1;
-    //     }
-    //   },
-    //   getLineColor: [192, 192, 192],
-    //   getPointRadius: 2,
-    //   pointRadiusUnits: "pixels",
-    //   stroked: false,
-    //   // picking: true,
+    const mvtLayer = new MVTLayer<PropertiesType>({
+      id: "MVTLayer",
+      // data: [`http://${import.meta.ev.MBTILES_URL}/{z}/{x}/{y}`],
+      // data: [
+      //   `/tiles/central/{z}/{x}/{y}`,
+      // ],
+      data: [
+        "https://tiles-a.basemaps.cartocdn.com/vectortiles/carto.streets/v1/{z}/{x}/{y}.mvt",
+      ],
+      minZoom: 0,
+      maxZoom: 14,
+      getFillColor: (f: Feature<Geometry, PropertiesType>) => {
+        switch (f.properties.layerName) {
+          case "poi":
+            return [255, 0, 0];
+          case "water":
+            return [120, 150, 180];
+          case "building":
+            return [218, 218, 218];
+          default:
+            return [240, 240, 240];
+        }
+      },
+      getLineWidth: (f: Feature<Geometry, PropertiesType>) => {
+        switch (f.properties.class) {
+          case "street":
+            return 6;
+          case "motorway":
+            return 10;
+          default:
+            return 1;
+        }
+      },
+      getLineColor: [192, 192, 192],
+      getPointRadius: 2,
+      pointRadiusUnits: "pixels",
+      stroked: false,
+      // picking: true,
+    });
+
+    // const cities = load(DATA_URL, CSVLoader).then((data) => {
+    //   cities = data.data;
+    //   const fontSize = 32;
+    //   const textLayer = new DECK.TextLayer<
+    //     City,
+    //     CollisionFilterExtensionProps<City>
+    //   >({
+    //     id: "world-cities",
+    //     cities,
+    //     characterSet: "auto",
+    //     fontSettings: {
+    //       buffer: 8,
+    //     },
+
+    //     // TextLayer options
+    //     getText: (d) => d.name,
+    //     getPosition: (d) => [d.longitude, d.latitude],
+    //     getColor: (d) => colorScale(d.population),
+    //     getSize: (d) => Math.pow(d.population, 0.25) / 40,
+    //     sizeScale: fontSize,
+    //     sizeMaxPixels,
+    //     sizeMinPixels,
+    //     maxWidth: 64 * 12,
+
+    //     // CollideExtension options
+    //     collisionEnabled: noOverlap,
+    //     getCollisionPriority: (d) => Math.log10(d.population),
+    //     collisionTestProps: {
+    //       sizeScale: fontSize * 2,
+    //       sizeMaxPixels: sizeMaxPixels * 2,
+    //       sizeMinPixels: sizeMinPixels * 2,
+    //     },
+    //     extensions: [new CollisionFilterExtension()],
+    //   });
     // });
 
     const deckOverlay = new MapboxOverlay({
@@ -159,7 +221,8 @@ class Map extends PureComponent<
           getTargetColor: [200, 0, 80],
           getWidth: 1,
         }),
-        // mvtLayer,
+        mvtLayer,
+        // textLayer
       ],
     });
 
